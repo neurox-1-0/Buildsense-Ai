@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Decision Trail · BuildSense AI
+{% endblock %}
+
+{% block content %}
+
+    <!-- Page Header -->
+    <section class="page-heading">
+
+        <a
+            class="back"
+            href="{{ url_for(
+                'dashboard.objective_detail',
+                objective_id=execution.objective_id
+            ) }}"
+        >
+            <span aria-hidden="true">←</span>
+            Back to objective
+        </a>
+
+        <div class="page-heading-content">
+
+            <div>
+                <p class="eyebrow">
+                    Transparent AI execution
+                </p>
+
+                <h1>
+                    Decision trail
+                </h1>
+
+                <p class="page-description">
+                    Review every step, tool output, reasoning result, and piece
+                    of supporting evidence used during this execution.
+                </p>
+            </div>
+
+            <div class="trail-summary">
+
+                <div class="summary-stat">
+                    <strong>{{ trail | length }}</strong>
+                    <span>Execution steps</span>
+                </div>
+
+                <div class="summary-stat">
+                    <strong>{{ evidence | length }}</strong>
+                    <span>Evidence records</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- Decision Timeline -->
+    <section class="card decision-trail-card">
+
+        <div class="card-header">
+
+            <div>
+                <p class="section-label">
+                    Agent activity
+                </p>
+
+                <h2>
+                    Execution timeline
+                </h2>
+
+                <p class="muted">
+                    Each item represents an action completed by the autonomous
+                    workflow.
+                </p>
+            </div>
+
+            <span class="timeline-count">
+                {{ trail | length }}
+            </span>
+
+        </div>
+
+        {% if trail %}
+
+            <div class="timeline decision-timeline">
+
+                {% for item in trail %}
+
+                    <article class="timeline-item decision-step">
+
+                        <span class="timeline-number">
+                            {{ loop.index }}
+                        </span>
+
+                        <div class="timeline-content">
+
+                            <div class="timeline-header">
+
+                                <div>
+                                    <p class="eyebrow">
+                                        {{ item.step | replace("_", " ") }}
+                                    </p>
+
+                                    <h3>
+                                        {{ item.message }}
+                                    </h3>
+                                </div>
+
+                                <time class="timeline-date">
+                                    {{ item.created_at[:19] | replace("T", " ") }}
+                                </time>
+
+                            </div>
+
+                            {% if item.data %}
+
+                                <details class="trail-data">
+
+                                    <summary>
+                                        View execution data
+                                    </summary>
+
+                                    <pre><code>{{ item.data | tojson(indent=2) }}</code></pre>
+
+                                </details>
+
+                            {% endif %}
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state compact-empty-state">
+
+                <div class="empty-state-icon" aria-hidden="true">
+                    ◌
+                </div>
+
+                <h3>
+                    No trail entries yet
+                </h3>
+
+                <p>
+                    Execution steps will appear here when the autonomous
+                    workflow begins processing this objective.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+    <!-- Evidence Section -->
+    <section class="card evidence-card">
+
+        <div class="card-header">
+
+            <div>
+                <p class="section-label">
+                    Supporting information
+                </p>
+
+                <h2>
+                    Collected evidence
+                </h2>
+
+                <p class="muted">
+                    Public customer discussions and source material used by the
+                    intelligence analysis agent.
+                </p>
+            </div>
+
+            <span class="evidence-count">
+                {{ evidence | length }}
+            </span>
+
+        </div>
+
+        {% if evidence %}
+
+            <div class="evidence-list">
+
+                {% for item in evidence[:10] %}
+
+                    <article class="evidence-item">
+
+                        <div class="evidence-header">
+
+                            <div class="evidence-source-icon" aria-hidden="true">
+                                {{ item.source[:1] | upper }}
+                            </div>
+
+                            <div class="evidence-title">
+
+                                <span class="evidence-source">
+                                    {{ item.source }}
+                                </span>
+
+                                <h3>
+                                    {{ item.title or "Untitled evidence" }}
+                                </h3>
+
+                            </div>
+
+                        </div>
+
+                        <blockquote class="evidence-content">
+                            <p>
+                                {{ item.content[:500] }}
+
+                                {% if item.content | length > 500 %}
+                                    …
+                                {% endif %}
+                            </p>
+                        </blockquote>
+
+                        <div class="evidence-footer">
+
+                            {% if item.url %}
+
+                                <a
+                                    href="{{ item.url }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="source-link"
+                                >
+                                    View original source
+                                    <span aria-hidden="true">↗</span>
+                                </a>
+
+                            {% endif %}
+
+                            {% if item.collected_at %}
+
+                                <small>
+                                    Collected:
+                                    {{ item.collected_at[:19] | replace("T", " ") }}
+                                </small>
+
+                            {% endif %}
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+            {% if evidence | length > 10 %}
+
+                <p class="evidence-limit-note">
+                    Showing 10 of {{ evidence | length }} evidence records.
+                </p>
+
+            {% endif %}
+
+        {% else %}
+
+            <div class="empty-state compact-empty-state">
+
+                <div class="empty-state-icon" aria-hidden="true">
+                    ◫
+                </div>
+
+                <h3>
+                    No evidence collected
+                </h3>
+
+                <p>
+                    Evidence will appear here after the data collection agent
+                    retrieves customer discussions and public source content.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+{% endblock %}
+

@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Opportunity Command Center · BuildSense AI{% endblock %}
+
+{% block content %}
+<section class="opportunity-hero">
+    <div class="opportunity-hero-copy">
+        <p class="hero-kicker">
+            <span class="live-dot" aria-hidden="true"></span>
+            Autonomous market opportunity intelligence
+        </p>
+        <h1>Validate your next business opportunity.</h1>
+        <p>
+            BuildSense studies real customer signals, compares strategies, and
+            delivers an evidence-backed management report.
+        </p>
+        <div class="agent-route" aria-label="Agent workflow">
+            <span><b>01</b> Collect evidence</span>
+            <i aria-hidden="true">→</i>
+            <span><b>02</b> Find demand signals</span>
+            <i aria-hidden="true">→</i>
+            <span><b>03</b> Recommend strategy</span>
+        </div>
+    </div>
+
+    <aside class="hero-scorecard" aria-label="Platform overview">
+        <p class="scorecard-label">Decision workspace</p>
+        <strong>{{ stats.objectives }}</strong>
+        <span>business opportunities evaluated</span>
+        <div class="scorecard-status">
+            <span><i class="status-dot active"></i>{{ stats.active }} active</span>
+            <span><i class="status-dot review"></i>{{ stats.review }} awaiting review</span>
+            <span><i class="status-dot approved"></i>{{ stats.approved }} approved</span>
+        </div>
+    </aside>
+</section>
+
+<section class="dashboard-stat-grid" aria-label="Analysis summary">
+    <article>
+        <span class="stat-symbol">◎</span>
+        <div><strong>{{ stats.objectives }}</strong><small>Opportunities</small></div>
+    </article>
+    <article>
+        <span class="stat-symbol">↻</span>
+        <div><strong>{{ stats.active }}</strong><small>Agents running</small></div>
+    </article>
+    <article>
+        <span class="stat-symbol">◇</span>
+        <div><strong>{{ stats.review }}</strong><small>Ready to review</small></div>
+    </article>
+    <article>
+        <span class="stat-symbol">✓</span>
+        <div><strong>{{ stats.approved }}</strong><small>Approved reports</small></div>
+    </article>
+</section>
+
+<div class="opportunity-layout">
+    <section class="card opportunity-form-card" id="new-opportunity">
+        <div class="section-heading-row">
+            <div>
+                <p class="section-label">New autonomous analysis</p>
+                <h2>Evaluate a business opportunity</h2>
+                <p class="muted">
+                    Give the agents a market, location, customer group, and the
+                    decision you need to make.
+                </p>
+            </div>
+            <span class="section-number">01</span>
+        </div>
+
+        <div class="scenario-picker">
+            <label for="scenario-preset">Start from a demonstration scenario</label>
+            <div class="scenario-picker-row">
+                <select id="scenario-preset">
+                    <option value="">Choose a scenario</option>
+                    <option value="pharmacy">Pharmacy inventory in Sri Lanka</option>
+                    <option value="pizza">Pizza shop in Rathnapura</option>
+                    <option value="laptop">Student laptop opportunity</option>
+                    <option value="custom">Blank custom opportunity</option>
+                </select>
+                <button type="button" class="secondary-action" id="apply-scenario">
+                    Use scenario
+                </button>
+            </div>
+        </div>
+
+        <form method="post"
+              action="{{ url_for('dashboard.create_objective') }}"
+              class="objective-form"
+              id="opportunity-form">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+
+            <div class="form-step-label"><span>1</span> Business goal</div>
+            <div class="form-group">
+                <label for="title">Opportunity title</label>
+                <input id="title" name="title" type="text" required maxlength="160"
+                       placeholder="Example: Pizza shop opportunity in Rathnapura">
+            </div>
+
+            <div class="form-group">
+                <label for="description">High-level goal</label>
+                <textarea id="description" name="description" required maxlength="2000"
+                          placeholder="Explain the opportunity, location, customer problem, and the decision you want the agents to make."></textarea>
+                <small class="form-help">
+                    Write naturally. The controller will build its own research plan.
+                </small>
+            </div>
+
+            <div class="form-step-label"><span>2</span> Market context</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="industry">Industry</label>
+                    <input id="industry" name="industry" type="text"
+                           placeholder="Food and restaurant">
+                </div>
+                <div class="form-group">
+                    <label for="target_market">Target market</label>
+                    <input id="target_market" name="target_market" type="text"
+                           placeholder="Students, families, young professionals">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="keywords">Research signals</label>
+                <input id="keywords" name="keywords" type="text"
+                       placeholder="pizza reviews, food delivery, family combos">
+                <small class="form-help">
+                    Add comma-separated searches the agents can expand and adapt.
+                </small>
+            </div>
+
+            <div class="form-step-label"><span>3</span> Trusted public sources</div>
+            <div class="form-group">
+                <label for="source_urls">Source URLs <span class="optional">optional</span></label>
+                <textarea id="source_urls" name="source_urls" class="source-url-input"
+                          placeholder="One public restaurant, competitor, menu, report, or directory URL per line"></textarea>
+                <div class="source-assist">
+                    <small class="form-help">Up to 10 public URLs. Private-network URLs are blocked.</small>
+                    <small id="source-count">0 sources</small>
+                </div>
+            </div>
+
+            <div class="analysis-promise">
+                <span class="promise-icon">AI</span>
+                <p>
+                    <strong>What you will receive</strong>
+                    Opportunity score, target segments, customer needs,
+                    competitive advantages, launch strategy, risks, evidence,
+                    and a downloadable approval report.
+                </p>
+            </div>
+
+            <button type="submit" class="primary-action opportunity-submit">
+                <span>Launch autonomous analysis</span>
+                <span aria-hidden="true">→</span>
+            </button>
+        </form>
+    </section>
+
+    <section class="card opportunity-history">
+        <div class="section-heading-row">
+            <div>
+                <p class="section-label">Decision portfolio</p>
+                <h2>Business opportunities</h2>
+                <p class="muted">Open an opportunity to follow agents, inspect evidence, or approve its report.</p>
+            </div>
+            <span class="section-number">{{ objectives | length }}</span>
+        </div>
+
+        <div class="history-filters" role="group" aria-label="Filter opportunities">
+            <button type="button" class="history-filter active" data-status-filter="all">All</button>
+            <button type="button" class="history-filter" data-status-filter="running">Active</button>
+            <button type="button" class="history-filter" data-status-filter="awaiting_approval">Review</button>
+            <button type="button" class="history-filter" data-status-filter="approved">Approved</button>
+            <button type="button" class="history-filter" data-status-filter="failed">Failed</button>
+        </div>
+
+        {% if objectives %}
+            <div class="opportunity-list">
+                {% for item in objectives %}
+                    {% set execution = item.latest_execution %}
+                    {% set status = execution.status if execution else item.status %}
+                    <article class="opportunity-row"
+                             data-opportunity-status="{{ status }}">
+                      <a class="opportunity-open"
+                         href="{{ url_for('dashboard.objective_detail', objective_id=item.objective_id) }}"
+                         aria-label="Open {{ item.title }}">
+                        <span class="opportunity-industry">
+                            {{ (item.industry or "Business")[:1] | upper }}
+                        </span>
+                        <span class="opportunity-row-main">
+                            <span class="opportunity-row-top">
+                                <strong>{{ item.title }}</strong>
+                                <span class="status status-{{ status | lower | replace('_', '-') }}">
+                                    {{ status | replace('_', ' ') }}
+                                </span>
+                            </span>
+                            <span class="opportunity-description">
+                                {{ item.description | truncate(125) }}
+                            </span>
+                            <span class="opportunity-meta">
+                                <span>{{ item.industry or "General business" }}</span>
+                                <span>{{ item.target_market or "Market not specified" }}</span>
+                                {% if execution %}
+                                    <span>{{ execution.created_at[:10] }}</span>
+                                {% endif %}
+                            </span>
+                        </span>
+                        <span class="row-arrow" aria-hidden="true">→</span>
+                      </a>
+                      {% if status not in ["queued", "running", "cancel_requested"] %}
+                        <form method="post"
+                              action="{{ url_for('dashboard.delete_objective', objective_id=item.objective_id) }}"
+                              class="record-delete-form"
+                              data-record-title="{{ item.title }}">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                            <button type="submit"
+                                    class="record-delete-button"
+                                    data-skip-loading="true"
+                                    aria-label="Delete {{ item.title }}"
+                                    title="Delete this past record">
+                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-.7 11H7.7L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/>
+                                </svg>
+                            </button>
+                        </form>
+                      {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+            <p class="filter-empty" id="filter-empty" hidden>No opportunities match this filter.</p>
+        {% else %}
+            <div class="empty-opportunity-state">
+                <span>◎</span>
+                <h3>Your first decision starts here</h3>
+                <p>Use the form to investigate a real market opportunity.</p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ objective.title }} · BuildSense AI
+{% endblock %}
+
+{% block content %}
+
+    <div class="detail-toolbar">
+        <a
+            class="back"
+            href="{{ url_for('dashboard.index') }}"
+        >
+            <span aria-hidden="true">←</span>
+            Back to dashboard
+        </a>
+
+        {% if can_delete %}
+            <form method="post"
+                  action="{{ url_for('dashboard.delete_objective', objective_id=objective.objective_id) }}"
+                  class="record-delete-form detail-delete-form"
+                  data-record-title="{{ objective.title }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                <button type="submit"
+                        class="detail-delete-button"
+                        data-skip-loading="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-.7 11H7.7L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/>
+                    </svg>
+                    Delete past record
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    <!-- Objective Summary -->
+    <section class="card objective-summary-card">
+
+        <div class="objective-summary-header">
+
+            <div class="objective-heading">
+
+                <p class="eyebrow">
+                    Business objective
+                </p>
+
+                <h1>
+                    {{ objective.title }}
+                </h1>
+
+                <p class="objective-summary-description">
+                    {{ objective.description }}
+                </p>
+
+            </div>
+
+            <span
+                class="status large status-{{ objective.status | lower | replace(' ', '-') | replace('_', '-') }}"
+            >
+                {{ objective.status | replace("_", " ") }}
+            </span>
+
+        </div>
+
+        <div class="objective-information-grid">
+
+            <div class="objective-info-item">
+                <span class="objective-info-label">
+                    Industry
+                </span>
+
+                <strong>
+                    {{ objective.industry or "Not specified" }}
+                </strong>
+            </div>
+
+            <div class="objective-info-item">
+                <span class="objective-info-label">
+                    Target market
+                </span>
+
+                <strong>
+                    {{ objective.target_market or "Not specified" }}
+                </strong>
+            </div>
+
+            <div class="objective-info-item objective-keywords-item">
+                <span class="objective-info-label">
+                    Search keywords
+                </span>
+
+                <div class="keyword-list">
+
+                    {% if objective.keywords %}
+
+                        {% for keyword in objective.keywords %}
+                            <span class="keyword-pill">
+                                {{ keyword }}
+                            </span>
+                        {% endfor %}
+
+                    {% else %}
+
+                        <span class="muted">
+                            No keywords provided
+                        </span>
+
+                    {% endif %}
+
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+    {% if latest %}
+        <section class="card workflow-monitor">
+            <div class="section-heading-row">
+                <div>
+                    <p class="section-label">Autonomous execution</p>
+                    <h2>Agent workflow</h2>
+                    <p class="muted">
+                        The controller chooses each next action from current
+                        evidence, confidence, tool results, and human guidance.
+                    </p>
+                </div>
+                <span class="status status-{{ latest.status | lower | replace('_', '-') }}">
+                    {{ latest.status | replace("_", " ") }}
+                </span>
+            </div>
+            <div class="workflow-steps">
+                <article class="workflow-step complete">
+                    <span>1</span>
+                    <div><strong>Plan</strong><small>Goal and tool selection</small></div>
+                </article>
+                <article class="workflow-step {% if latest.status not in ['queued'] %}complete{% else %}active{% endif %}">
+                    <span>2</span>
+                    <div><strong>Research</strong><small>Public evidence collection</small></div>
+                </article>
+                <article class="workflow-step {% if latest.status in ['awaiting_approval','approved','approved_with_modification','rejected'] %}complete{% elif latest.status == 'running' %}active{% endif %}">
+                    <span>3</span>
+                    <div><strong>Reason</strong><small>Demand and strategy analysis</small></div>
+                </article>
+                <article class="workflow-step {% if latest.status in ['approved','approved_with_modification','rejected'] %}complete{% elif latest.status == 'awaiting_approval' %}active{% endif %}">
+                    <span>4</span>
+                    <div><strong>Decide</strong><small>Management review and report</small></div>
+                </article>
+            </div>
+            {% if latest.error %}
+                <div class="workflow-error">
+                    <strong>Execution error</strong>
+                    <span>{{ latest.error }}</span>
+                </div>
+            {% endif %}
+        </section>
+
+    {% endif %}
+
+    <!-- Execution History -->
+    <section class="card execution-history-card">
+
+        <div class="card-header">
+
+            <div>
+                <p class="section-label">
+                    Autonomous workflow
+                </p>
+
+                <h2>
+                    Execution history
+                </h2>
+
+                <p class="muted">
+                    Review the progress, status, decision trail, and generated
+                    recommendation for each execution.
+                </p>
+            </div>
+
+            {% if executions %}
+                <span class="execution-count">
+                    {{ executions | length }}
+                </span>
+            {% endif %}
+
+        </div>
+
+        {% if executions %}
+
+            <div class="execution-list">
+
+                {% for item in executions %}
+
+                    <article class="execution-item">
+
+                        <div class="execution-main">
+
+                            <div class="execution-icon" aria-hidden="true">
+
+                                {% if item.status in ["running", "queued"] %}
+                                    ◌
+                                {% elif item.status in ["completed", "approved"] %}
+                                    ✓
+                                {% elif item.status in ["failed", "rejected"] %}
+                                    !
+                                {% else %}
+                                    ◆
+                                {% endif %}
+
+                            </div>
+
+                            <div class="execution-details">
+
+                                <div class="execution-title-row">
+
+                                    <div>
+                                        <span class="execution-label">
+                                            Execution ID
+                                        </span>
+
+                                        <h3>
+                                            {{ item.execution_id }}
+                                        </h3>
+                                    </div>
+
+                                </div>
+
+                                <div class="execution-meta">
+
+                                    <span>
+                                        <strong>Created:</strong>
+                                        {{ item.created_at[:19] | replace("T", " ") }}
+                                    </span>
+
+                                    <span>
+                                        <strong>Current node:</strong>
+                                        {{ item.current_node | replace("_", " ") }}
+                                    </span>
+
+                                    {% if item.retry_count is defined %}
+                                        <span>
+                                            <strong>Retries:</strong>
+                                            {{ item.retry_count }}
+                                        </span>
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <span
+                            class="execution-status status status-{{ item.status | lower | replace(' ', '-') | replace('_', '-') }}"
+                        >
+                            {{ item.status | replace("_", " ") }}
+                        </span>
+
+                        <div class="execution-actions">
+                            {% if item.status in ["queued", "running"] %}
+                                <form method="post"
+                                      action="{{ url_for('dashboard.cancel_execution', execution_id=item.execution_id) }}">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                                    <button type="submit" class="execution-action secondary-action">
+                                        Stop execution
+                                    </button>
+                                </form>
+                            {% endif %}
+
+                            <a
+                                class="execution-action secondary-action"
+                                href="{{ url_for(
+                                    'dashboard.decision_trail',
+                                    execution_id=item.execution_id
+                                ) }}"
+                            >
+                                <span aria-hidden="true">◎</span>
+                                Decision trail
+                            </a>
+
+                            <a
+                                class="execution-action primary-review-action"
+                                href="{{ url_for(
+                                    'dashboard.recommendation_review',
+                                    execution_id=item.execution_id
+                                ) }}"
+                            >
+                                <span aria-hidden="true">→</span>
+                                Review
+                            </a>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state compact-empty-state">
+
+                <div class="empty-state-icon" aria-hidden="true">
+                    ◌
+                </div>
+
+                <h3>
+                    No executions found
+                </h3>
+
+                <p>
+                    An execution will appear here after the autonomous analysis
+                    workflow starts processing this objective.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+    {% if latest and latest.status in ["queued", "running"] %}
+
+        <div
+            class="execution-refresh-indicator"
+            role="status"
+            aria-live="polite"
+        >
+            <span class="refresh-spinner" aria-hidden="true"></span>
+
+            <span>
+                Analysis is currently running. This page will refresh
+                automatically.
+            </span>
+        </div>
+
+        <script>
+            window.setTimeout(() => {
+                window.location.reload();
+            }, 2500);
+        </script>
+
+    {% endif %}
+
+{% endblock %}

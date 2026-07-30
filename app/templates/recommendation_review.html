@@ -1,0 +1,837 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+    Recommendation Review · BuildSense AI
+{% endblock %}
+
+{% block content %}
+
+    <!-- Back Navigation -->
+    <a
+        class="back"
+        href="{{ url_for(
+            'dashboard.objective_detail',
+            objective_id=execution.objective_id
+        ) }}"
+    >
+        <span aria-hidden="true">←</span>
+        Back to objective
+    </a>
+
+    <!-- Page Header -->
+    <section class="recommendation-page-header">
+
+        <div>
+            <p class="eyebrow">
+                Human-in-the-loop decision
+            </p>
+
+            <h1>
+                Recommendation review
+            </h1>
+
+            <p>
+                Review the generated strategy, supporting intelligence,
+                alternative options, and submit the final management decision.
+            </p>
+        </div>
+
+        <span
+            class="status large status-{{ execution.status | lower | replace('_', '-') | replace(' ', '-') }}"
+        >
+            {{ execution.status | replace("_", " ") }}
+        </span>
+
+    </section>
+
+    {% if execution.status in ["approved", "approved_with_modification"] %}
+        <section class="report-download-panel" aria-label="Approved report downloads">
+            <div class="download-panel-copy">
+                <span class="download-ready-mark" aria-hidden="true">✓</span>
+                <div>
+                    <strong>Approved report ready</strong>
+                    <small>Download the presentation-ready report or its structured data.</small>
+                </div>
+            </div>
+            <div class="report-download-actions">
+            <a class="report-download-button report-download-primary"
+               href="{{ url_for('dashboard.approved_pdf_report', execution_id=execution.execution_id) }}">
+                <span class="download-file-type" aria-hidden="true">PDF</span>
+                <span>
+                    <strong>Download report</strong>
+                    <small>Presentation-ready PDF</small>
+                </span>
+                <span class="download-arrow" aria-hidden="true">↓</span>
+            </a>
+            <a class="report-download-button report-download-secondary"
+               href="{{ url_for('dashboard.approved_report', execution_id=execution.execution_id) }}">
+                <span class="download-file-type" aria-hidden="true">{ }</span>
+                <span>
+                    <strong>Export data</strong>
+                    <small>Structured JSON file</small>
+                </span>
+                <span class="download-arrow" aria-hidden="true">↓</span>
+            </a>
+            </div>
+        </section>
+    {% endif %}
+
+    {% if recommendation %}
+
+        <!-- Primary Recommendation -->
+        <section class="card highlight recommendation-primary-card">
+
+            <div class="recommendation-primary-header">
+
+                <div>
+                    <p class="eyebrow">
+                        Recommended strategy
+                    </p>
+
+                    <h2>
+                        {{ recommendation.recommended_strategy.title }}
+                    </h2>
+                </div>
+
+                <div class="confidence-score">
+
+                    <strong>
+                        {{ "%.0f" | format(recommendation.confidence * 100) }}%
+                    </strong>
+
+                    <span>
+                        Confidence
+                    </span>
+
+                </div>
+
+            </div>
+
+            <p class="recommendation-description">
+                {{ recommendation.recommended_strategy.description }}
+            </p>
+
+            <div class="recommendation-metrics">
+
+                <div class="recommendation-metric">
+                    <span>Expected impact</span>
+                    <strong>
+                        {{ recommendation.recommended_strategy.expected_impact }}
+                    </strong>
+                </div>
+
+                <div class="recommendation-metric">
+                    <span>Implementation cost</span>
+                    <strong>
+                        {{ recommendation.recommended_strategy.implementation_cost }}
+                    </strong>
+                </div>
+
+                <div class="recommendation-metric">
+                    <span>Risk level</span>
+                    <strong>
+                        {{ recommendation.recommended_strategy.risk }}
+                    </strong>
+                </div>
+
+                <div class="recommendation-metric">
+                    <span>Strategy score</span>
+                    <strong>
+                        {{ recommendation.recommended_strategy.score }}
+                    </strong>
+                </div>
+
+            </div>
+
+            <div class="recommendation-justification">
+
+                <span class="justification-icon" aria-hidden="true">
+                    ◎
+                </span>
+
+                <div>
+                    <h3>
+                        Why this strategy?
+                    </h3>
+
+                    <p>
+                        {{ recommendation.recommended_strategy.justification }}
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+        {% if recommendation.final_business_report %}
+            {% set report = recommendation.final_business_report %}
+            <section class="card final-report-shell">
+                <div class="final-report-header">
+                    <div>
+                        <p class="eyebrow">Decision-ready output</p>
+                        <h2>Final Business Report</h2>
+                        <p>
+                            Evidence-based opportunity assessment and recommended
+                            market-entry actions.
+                        </p>
+                    </div>
+                    <div class="report-score-pair">
+                        <div class="report-score-card opportunity-score">
+                            <div class="report-score-label">
+                                <span>Market opportunity</span>
+                                <small>Potential</small>
+                            </div>
+                            <strong>{{ "%.0f" | format(report.opportunity_score) }}<sup>%</sup></strong>
+                            <div class="report-score-track" aria-hidden="true">
+                                <span style="width: {{ report.opportunity_score | round | int }}%"></span>
+                            </div>
+                        </div>
+                        {% set confidence_percent = report.confidence | default(recommendation.confidence * 100, true) %}
+                        <div class="report-score-card confidence-score-card">
+                            <div class="report-score-label">
+                                <span>Analysis confidence</span>
+                                <small>Evidence quality</small>
+                            </div>
+                            <strong>{{ "%.0f" | format(confidence_percent) }}<sup>%</sup></strong>
+                            <div class="report-score-track" aria-hidden="true">
+                                <span style="width: {{ confidence_percent | round | int }}%"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="final-report-grid">
+                    <article class="report-block report-block-full report-goal">
+                        <p class="section-label">Business goal</p>
+                        <h3>{{ report.business_goal }}</h3>
+                    </article>
+
+                    <article class="report-block">
+                        <h3>Data sources used</h3>
+                        <ul class="report-list checked">
+                            {% for item in report.data_sources_used %}
+                                <li>{{ item | replace("_", " ") | title }}</li>
+                            {% endfor %}
+                        </ul>
+                    </article>
+
+                    <article class="report-block">
+                        <h3>Top customer complaints</h3>
+                        <ul class="report-list">
+                            {% for item in report.top_customer_complaints %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </article>
+
+                    <article class="report-block">
+                        <h3>Trending products</h3>
+                        <ul class="report-list">
+                            {% for item in report.trending_products %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </article>
+
+                    <article class="report-block">
+                        <h3>High-demand categories</h3>
+                        <ul class="report-list">
+                            {% for item in report.high_demand_categories %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </article>
+
+                    <article class="report-block">
+                        <h3>Recommended business changes</h3>
+                        <ul class="report-list checked">
+                            {% for item in report.recommended_business_changes %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </article>
+
+                    <article class="report-block">
+                        <h3>Marketing recommendations</h3>
+                        <ul class="report-list checked">
+                            {% for item in report.marketing_recommendations %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </article>
+
+                    <article class="report-block">
+                        <h3>Operational improvements</h3>
+                        <ul class="report-list checked">
+                            {% for item in report.operational_improvements %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </article>
+
+                    <article class="report-block">
+                        <h3>Target market</h3>
+                        <div class="trend-list">
+                            {% for item in report.target_markets %}
+                                <span class="trend-pill">{{ item }}</span>
+                            {% endfor %}
+                        </div>
+                    </article>
+
+                    <article class="report-block report-block-full blueprint-intro">
+                        <p class="section-label">Requirement-adaptive report</p>
+                        <h3>Your requested decisions, answered with evidence</h3>
+                        <p>
+                            This report structure follows the business goal and
+                            questions you submitted. Validate important local,
+                            supplier, customer, legal, and financial inputs
+                            before implementation.
+                        </p>
+                    </article>
+
+                    {% if report.requirement_answers %}
+                        {% for answer in report.requirement_answers %}
+                            <article class="report-block report-block-full requirement-answer">
+                                <p class="section-label">Requirement {{ loop.index }}</p>
+                                <h3>{{ answer.requirement }}</h3>
+                                <p class="answer-recommendation">{{ answer.recommendation }}</p>
+                                <div class="answer-meta">
+                                    <span><strong>Why:</strong> {{ answer.rationale }}</span>
+                                    <span><strong>Confidence:</strong> {{ "%.0f" | format(answer.confidence * 100) }}%</span>
+                                    {% if answer.validation_needed %}
+                                        <span><strong>Validate:</strong> {{ answer.validation_needed }}</span>
+                                    {% endif %}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if report.dynamic_sections %}
+                        {% for section in report.dynamic_sections %}
+                            <article class="report-block {% if loop.index is odd and loop.last %}report-block-full{% endif %}">
+                                <p class="section-label">Tailored analysis</p>
+                                <h3>{{ section.title }}</h3>
+                                <p class="section-purpose">{{ section.purpose }}</p>
+                                <ol class="report-list blueprint-list">
+                                    {% for item in section.recommendations %}
+                                        <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ol>
+                                {% if section.success_measure %}
+                                    <p class="success-measure">
+                                        <strong>Success measure:</strong>
+                                        {{ section.success_measure }}
+                                    </p>
+                                {% endif %}
+                            </article>
+                        {% endfor %}
+                    {% else %}
+                        {% set blueprint_sections = [
+                            ("Location strategy", report.location_recommendations),
+                            ("Target audience profiles", report.audience_profiles),
+                            ("Product and service portfolio", report.product_portfolio),
+                            ("Pricing and unit economics", report.pricing_strategy),
+                            ("Customer experience", report.customer_experience_plan),
+                            ("Technology and measurement", report.technology_plan),
+                            ("Financial assumptions to validate", report.financial_assumptions),
+                            ("90-day launch roadmap", report.ninety_day_plan),
+                            ("Success metrics", report.success_metrics),
+                            ("Immediate next actions", report.immediate_next_actions)
+                        ] %}
+                        {% for title, items in blueprint_sections if items %}
+                            <article class="report-block">
+                                <h3>{{ title }}</h3>
+                                <ol class="report-list blueprint-list">
+                                    {% for item in items %}
+                                        <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ol>
+                            </article>
+                        {% endfor %}
+                    {% endif %}
+
+                    <article class="report-block report-block-full overall-recommendation">
+                        <p class="section-label">Overall recommendation</p>
+                        <h3>{{ report.overall_recommendation }}</h3>
+                    </article>
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- Intelligence and Alternatives -->
+        <section class="grid two recommendation-analysis-grid">
+
+            <!-- Intelligence Summary -->
+            <article class="card intelligence-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <p class="section-label">
+                            Agent 2 output
+                        </p>
+
+                        <h2>
+                            Market intelligence
+                        </h2>
+                    </div>
+
+                    <span class="card-icon" aria-hidden="true">
+                        ◈
+                    </span>
+
+                </div>
+
+                <div class="intelligence-summary">
+                    <p>
+                        {{ intelligence.summary }}
+                    </p>
+                </div>
+
+                <div class="intelligence-detail">
+
+                    <span class="intelligence-label">
+                        Overall sentiment
+                    </span>
+
+                    <span
+                        class="sentiment-badge sentiment-{{ intelligence.overall_sentiment | lower | replace(' ', '-') }}"
+                    >
+                        {{ intelligence.overall_sentiment }}
+                    </span>
+
+                </div>
+
+                <div class="intelligence-trends">
+
+                    <span class="intelligence-label">
+                        Detected trends
+                    </span>
+
+                    {% if intelligence.trends %}
+
+                        <div class="trend-list">
+
+                            {% for trend in intelligence.trends %}
+                                <span class="trend-pill">
+                                    {{ trend }}
+                                </span>
+                            {% endfor %}
+
+                        </div>
+
+                    {% else %}
+
+                        <p class="muted">
+                            No major trends were detected.
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+                {% if intelligence.pain_points %}
+
+                    <div class="intelligence-trends">
+
+                        <span class="intelligence-label">
+                            Customer pain points
+                        </span>
+
+                        <div class="pain-point-list">
+
+                            {% for pain_point in intelligence.pain_points %}
+                                <span class="pain-point-pill">
+                                    {{ pain_point }}
+                                </span>
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
+                {% if intelligence.decision_readiness %}
+                    <div class="intelligence-readiness">
+                        <span class="intelligence-label">Decision readiness</span>
+                        <strong class="readiness-level readiness-{{ intelligence.decision_readiness }}">
+                            {{ intelligence.decision_readiness }}
+                        </strong>
+                    </div>
+                {% endif %}
+
+                {% if intelligence.verified_signals %}
+                    <div class="intelligence-pro-section">
+                        <span class="intelligence-label">Verified evidence signals</span>
+                        {% for signal in intelligence.verified_signals[:5] %}
+                            <article class="intelligence-signal">
+                                <strong>{{ signal.signal }}</strong>
+                                <p>{{ signal.interpretation }}</p>
+                                <small>{{ "%.0f" | format(signal.confidence * 100) }}% confidence</small>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if intelligence.opportunity_insights %}
+                    <div class="intelligence-pro-section">
+                        <span class="intelligence-label">Opportunities to test</span>
+                        {% for item in intelligence.opportunity_insights[:4] %}
+                            <article class="intelligence-signal opportunity-signal">
+                                <strong>{{ item.opportunity }}</strong>
+                                <p>{{ item.why_it_matters }}</p>
+                                <small><b>Test:</b> {{ item.recommended_test }}</small>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if intelligence.contradictions %}
+                    <div class="intelligence-pro-section">
+                        <span class="intelligence-label">Contradictions and cautions</span>
+                        <ul class="report-list">
+                            {% for item in intelligence.contradictions %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                {% if intelligence.research_gaps %}
+                    <div class="intelligence-pro-section">
+                        <span class="intelligence-label">Evidence gaps and next research</span>
+                        {% for gap in intelligence.research_gaps[:4] %}
+                            <article class="intelligence-signal research-gap">
+                                <strong>{{ gap.missing_information }}</strong>
+                                <p>{{ gap.decision_impact }}</p>
+                                <small><b>Next:</b> {{ gap.next_research_action }}</small>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+            </article>
+
+            <!-- Alternative Strategies -->
+            <article class="card alternatives-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <p class="section-label">
+                            Strategy comparison
+                        </p>
+
+                        <h2>
+                            Alternative strategies
+                        </h2>
+                    </div>
+
+                    <span class="alternative-count">
+                        {{ recommendation.alternatives | length }}
+                    </span>
+
+                </div>
+
+                {% if recommendation.alternatives %}
+
+                    <div class="alternative-list">
+
+                        {% for item in recommendation.alternatives %}
+
+                            <article class="alternative-strategy">
+
+                                <div class="alternative-strategy-header">
+
+                                    <span class="alternative-number">
+                                        {{ loop.index }}
+                                    </span>
+
+                                    <div>
+                                        <h3>
+                                            {{ item.title }}
+                                        </h3>
+
+                                        <span class="alternative-score">
+                                            Score: {{ item.score }}
+                                        </span>
+                                    </div>
+
+                                </div>
+
+                                <p>
+                                    {{ item.description }}
+                                </p>
+
+                                {% if item.justification %}
+
+                                    <details class="alternative-details">
+
+                                        <summary>
+                                            View justification
+                                        </summary>
+
+                                        <p>
+                                            {{ item.justification }}
+                                        </p>
+
+                                    </details>
+
+                                {% endif %}
+
+                            </article>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state compact-empty-state">
+
+                        <div class="empty-state-icon" aria-hidden="true">
+                            ◌
+                        </div>
+
+                        <h3>
+                            No alternatives available
+                        </h3>
+
+                        <p>
+                            The strategy agent did not generate additional
+                            alternatives for this execution.
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+            </article>
+
+        </section>
+
+        <!-- Human Decision -->
+        <section class="card human-decision-card">
+
+            <div class="card-header">
+
+                <div>
+                    <p class="section-label">
+                        Management control
+                    </p>
+
+                    <h2>
+                        Submit human decision
+                    </h2>
+
+                    <p class="muted">
+                        Approve the recommendation, modify it, request more
+                        evidence, reject it, or restart the complete execution.
+                    </p>
+                </div>
+
+                <span class="human-icon" aria-hidden="true">
+                    ✓
+                </span>
+
+            </div>
+
+            <form
+                method="post"
+                action="{{ url_for(
+                    'approval.decide',
+                    execution_id=execution.execution_id
+                ) }}"
+                class="decision-form"
+            >
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+
+                <div class="form-group">
+
+                    <label for="feedback">
+                        Decision feedback
+                    </label>
+
+                    <textarea
+                        id="feedback"
+                        name="feedback"
+                        placeholder="Explain your decision, requested changes, or the additional evidence needed."
+                    ></textarea>
+
+                    <small class="form-help">
+                        This feedback will be stored in the decision trail and
+                        may be used to guide the next agent execution.
+                    </small>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="modified_summary">
+                        Modified recommendation summary
+                    </label>
+
+                    <textarea
+                        id="modified_summary"
+                        name="modified_summary"
+                        placeholder="Describe the modified recommendation when selecting Modify and approve."
+                    ></textarea>
+
+                    <small class="form-help">
+                        Complete this field only when changing the original
+                        recommendation.
+                    </small>
+
+                </div>
+
+                <div class="decision-action-grid">
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="approve"
+                        class="decision-button approve-action"
+                    >
+                        <span aria-hidden="true">✓</span>
+
+                        <span>
+                            <strong>Approve</strong>
+                            <small>Accept the proposed strategy</small>
+                        </span>
+                    </button>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="modify"
+                        class="decision-button modify-action"
+                    >
+                        <span aria-hidden="true">✎</span>
+
+                        <span>
+                            <strong>Modify and approve</strong>
+                            <small>Approve your edited version</small>
+                        </span>
+                    </button>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="request_analysis"
+                        class="decision-button analysis-action"
+                    >
+                        <span aria-hidden="true">↻</span>
+
+                        <span>
+                            <strong>Request more analysis</strong>
+                            <small>Collect or analyze more evidence</small>
+                        </span>
+                    </button>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="reject"
+                        class="decision-button reject-action"
+                    >
+                        <span aria-hidden="true">×</span>
+
+                        <span>
+                            <strong>Reject</strong>
+                            <small>Do not use this recommendation</small>
+                        </span>
+                    </button>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="restart"
+                        class="decision-button restart-action"
+                    >
+                        <span aria-hidden="true">⟳</span>
+
+                        <span>
+                            <strong>Restart execution</strong>
+                            <small>Run the complete workflow again</small>
+                        </span>
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    {% elif execution.status == "failed" %}
+
+        <section class="card recommendation-waiting-card">
+            <p class="eyebrow">Execution stopped</p>
+            <h2>The analysis could not be completed</h2>
+            <p>
+                {{ execution.error or "An unexpected execution error occurred." }}
+            </p>
+            <p>
+                Return to the objective and start a new execution after correcting
+                the reported problem.
+            </p>
+            <a class="primary-action"
+               href="{{ url_for('dashboard.objective_detail', objective_id=execution.objective_id) }}">
+                Back to objective
+            </a>
+        </section>
+
+    {% elif execution.status == "cancelled" %}
+
+        <section class="card recommendation-waiting-card">
+            <p class="eyebrow">Execution cancelled</p>
+            <h2>This analysis was stopped</h2>
+            <p>Start another execution from the objective when you are ready.</p>
+        </section>
+
+    {% else %}
+
+        <!-- Waiting State -->
+        <section class="card recommendation-waiting-card">
+
+            <div class="waiting-animation" aria-hidden="true">
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+            </div>
+
+            <p class="eyebrow">
+                Agent workflow in progress
+            </p>
+
+            <h2>
+                The recommendation is not ready yet
+            </h2>
+
+            <p>
+                BuildSense AI is collecting evidence, analyzing customer demand,
+                and evaluating possible business strategies.
+            </p>
+
+            <div
+                class="waiting-status"
+                role="status"
+                aria-live="polite"
+            >
+                This page will refresh automatically.
+            </div>
+
+        </section>
+
+        <script>
+            window.setTimeout(() => {
+                window.location.reload();
+            }, 2500);
+        </script>
+
+    {% endif %}
+
+{% endblock %}
