@@ -1,6 +1,5 @@
+#execution_planner.py   
 from config.settings import get_settings
-
-
 def _extract_constraints(guidance: str) -> tuple[list[str], list[str]]:
     required = []
     prohibited = []
@@ -33,7 +32,6 @@ def build_execution_plan(objective: dict, retry_count: int = 0, guidance: str = 
         f"{base_query} {context}".strip(),
         f"{base_query} customer problems alternatives pricing reviews {context}".strip(),
     ]
-
     objective_text = " ".join([
         objective.get("title", ""),
         objective.get("description", ""),
